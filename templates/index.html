@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Robeson Food Finder</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <main>
+        <h1>Robeson Food Finder</h1>
+
+        <p>
+            Find food assistance near you in Robeson County, North Carolina.
+        </p>
+
+        <form action="/results" method="get">
+            <label for="zip">Enter your ZIP code:</label>
+
+            <input
+                type="text"
+                id="zip"
+                name="zip"
+                placeholder="28358"
+            >
+
+            <button type="submit">
+                Find Food
+            </button>
+        </form>
+    </main>
+
+</body>
+</html>

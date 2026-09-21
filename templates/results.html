@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Results | Robeson Food Finder</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+{% if error %}
+<body>
+    <main class="results-main">
+        <h1>Robeson Food Finder</h1>
+        <p>We couldn't find "{{ zip_code }}" in Robeson County. Try a ZIP like 28358 or 28372.</p>
+        <p><a href="/">&larr; Try again</a></p>
+    </main>
+</body>
+{% else %}
+<body class="map-page">
+
+    <header class="results-topbar">
+        <div>
+            <h1>Robeson Food Finder</h1>
+            <p class="topbar-sub">Near {{ city }} ({{ zip_code }}) &middot; click a dot for details</p>
+        </div>
+        <a href="/" class="back-link">&larr; Search another ZIP</a>
+    </header>
+
+    <div id="map"></div>
+
+    <section class="results-list-section">
+        <div class="snap-note">
+            <strong>Not sure if you qualify for food assistance?</strong>
+            Call <a href="tel:211">211</a> (free, 24/7) or visit
+            <a href="https://www.nc211.org" target="_blank" rel="noopener">nc211.org</a>
+            to ask about SNAP (food stamps), WIC, and other benefits --
+            these often help more, and for longer, than a single pantry visit.
+        </div>
+
+        <ul class="results-list">
+            {% for loc in locations %}
+            <li class="result-card">
+                <span class="tag">{{ loc.type }}</span>
+                <h2>{{ loc.name }}</h2>
+                <p>{{ loc.distance }} miles away</p>
+                <p>{{ loc.address }}</p>
+                <p>{{ loc.phone }}</p>
+                <p>{{ loc.hours }}</p>
+                <p class="visit-type">✅ {{ loc.visit_type }}</p>
+                {% if loc.website %}
+                <p><a href="{{ loc.website }}" target="_blank" rel="noopener">{{ loc.website }}</a></p>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script>
+        const userLat = {{ user_lat }};
+        const userLon = {{ user_lon }};
+        const locations = {{ locations | tojson }};
+
+        const map = L.map("map").setView([userLat, userLon], 11);
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: "&copy; OpenStreetMap contributors"
+        }).addTo(map);
+
+        // Red dot for the ZIP code the user searched
+        const youAreHereIcon = L.divIcon({
+            className: "",
+            html: '<div style="background:red;width:16px;height:16px;border-radius:50%;border:2px solid white;"></div>',
+            iconSize: [16, 16],
+        });
+
+        L.marker([userLat, userLon], { icon: youAreHereIcon }).addTo(map);
+
+        // One shared blue-dot icon for every food bank / pantry / mobile stop
+        const locationIcon = L.divIcon({
+            className: "",
+            html: '<div style="background:#1976d2;width:14px;height:14px;border-radius:50%;border:2px solid white;"></div>',
+            iconSize: [14, 14],
+        });
+
+        // One marker per food bank / pantry / mobile stop.
+        locations.forEach(function (loc) {
+            let popupHtml =
+                "<div class='popup-card'>" +
+                "<strong>" + loc.name + "</strong>" +
+                "<span class='popup-tag'>" + loc.type + "</span>" +
+                "<p>" + loc.distance + " miles away</p>" +
+                "<p>" + loc.address + "</p>" +
+                "<p>" + loc.phone + "</p>" +
+                "<p>" + loc.hours + "</p>" +
+                "<p class='popup-visit-type'> " + loc.visit_type + "</p>";
+
+            if (loc.website) {
+                popupHtml += '<p>🔗 <a href="' + loc.website + '" target="_blank" rel="noopener">Visit website</a></p>';
+            }
+
+            popupHtml += "</div>";
+
+            L.marker([loc.lat, loc.lon], { icon: locationIcon })
+                .addTo(map)
+                .bindPopup(popupHtml, { maxWidth: 260 });
+        });
+    </script>
+</body>
+{% endif %}
+</html>
